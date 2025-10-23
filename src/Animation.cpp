@@ -1,4 +1,4 @@
-#include "Animation.h"
+﻿#include "Animation.h"
 #include <pugixml.hpp>
 #include <cstdio>
 
@@ -92,16 +92,40 @@ bool AnimationSet::LoadFromTSX(const char* tsxPath,
         if (!animNode) continue;
 
         std::string name;
-        auto it = aliases.find(baseId);
-        if (it != aliases.end()) {
-            name = it->second;
-        }
-        else {
-            name = "tile_" + std::to_string(baseId);
+        // a) Si hay propiedad <property name="name" value="...">
+        pugi::xml_node props = tile.child("properties");
+        if (props) {
+            for (pugi::xml_node prop = props.child("property"); prop; prop = prop.next_sibling("property")) {
+                std::string propName = prop.attribute("name").as_string();
+                if (propName == "name") {
+                    name = prop.attribute("value").as_string();
+                }
+            }
         }
 
+        // b) Si no tiene propiedad, buscar en el mapa de aliases (por compatibilidad)
+        if (name.empty()) {
+            auto it = aliases.find(baseId);
+            if (it != aliases.end()) {
+                name = it->second;
+            }
+            else {
+                name = "tile_" + std::to_string(baseId);
+            }
+        }
+
+        // --- 2️⃣ Leer loop ---
+        bool loop = true; // valor por defecto
+        if (props) {
+            for (pugi::xml_node prop = props.child("property"); prop; prop = prop.next_sibling("property")) {
+                std::string propName = prop.attribute("name").as_string();
+                if (propName == "loop") {
+                    loop = prop.attribute("value").as_bool(true);
+                }
+            }
+        }
         Animation clip;
-        clip.SetLoop(true);
+        clip.SetLoop(loop);
 
         for (pugi::xml_node f = animNode.child("frame"); f; f = f.next_sibling("frame")) {
             int frameId = f.attribute("tileid").as_int();

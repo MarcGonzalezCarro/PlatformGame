@@ -13,7 +13,7 @@
 Physics::Physics() : Module()
 {
     world = b2_nullWorldId;
-    debug = false; // toggle with F9
+    debug = true; // toggle with F1
 }
 
 // Destructor
@@ -185,7 +185,7 @@ bool Physics::PostUpdate()
     bool ret = true;
 
     // Activate or deactivate debug mode
-    if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_F9) == KEY_DOWN)
+    if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_F1) == KEY_DOWN)
         debug = !debug;
 
     // Debug draw via Box2D 3.x callbacks
@@ -198,8 +198,8 @@ bool Physics::PostUpdate()
 
             // Enable only what you support (3.1 field names)
             dd.drawShapes = true;
-            dd.drawJoints = true;   // enable if you want joints drawn
-            dd.drawBounds = true;   // AABBs
+            //dd.drawJoints = true;   // enable if you want joints drawn
+            //dd.drawBounds = true;   // AABBs
             dd.drawContacts = true;   // contact points
 
             // Implemented callbacks
@@ -359,6 +359,12 @@ void PhysBody::GetPosition(int& x, int& y) const
     b2Vec2 pos = b2Body_GetPosition(body);
     x = METERS_TO_PIXELS(pos.x);
     y = METERS_TO_PIXELS(pos.y);
+}
+
+void PhysBody::SetPosition(int x, int y)
+{
+    b2Vec2 pos = { PIXEL_TO_METERS(x), PIXEL_TO_METERS(y) };
+    b2Body_SetTransform(body, pos, b2MakeRot(0));
 }
 
 float PhysBody::GetRotation() const

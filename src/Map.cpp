@@ -53,7 +53,7 @@ bool Map::Update(float dt)
                         //Check if the gid is different from 0 - some tiles are empty
                         if (gid != 0) {
                             //L09: TODO 3: Obtain the tile set using GetTilesetFromTileId
-                            TileSet* tileSet = mapData.tilesets.front();
+                            TileSet* tileSet = GetTilesetFromTileId(gid);
                             if (tileSet != nullptr) {
                                 //Get the Rect from the tileSetTexture;
                                 SDL_Rect tileRect = tileSet->GetRect(gid);
@@ -75,7 +75,35 @@ bool Map::Update(float dt)
 // L09: TODO 2: Implement function to the Tileset based on a tile id
 TileSet* Map::GetTilesetFromTileId(int gid) const
 {
-	TileSet* set = nullptr;
+    TileSet* set = nullptr;
+
+    // Convertimos la lista de tilesets a un vector temporal para poder usar índices
+    std::vector<TileSet*> tilesetVec(mapData.tilesets.begin(), mapData.tilesets.end());
+
+    for (size_t i = 0; i < tilesetVec.size(); ++i)
+    {
+        TileSet* current = tilesetVec[i];
+
+        // Si NO es el último tileset, comprobamos si el gid está dentro del rango
+        if (i < tilesetVec.size() - 1)
+        {
+            TileSet* next = tilesetVec[i + 1];
+            if (gid >= current->firstGid && gid < next->firstGid)
+            {
+                set = current;
+                break;
+            }
+        }
+        else
+        {
+            // Último tileset: si el gid es mayor o igual, pertenece aquí
+            if (gid >= current->firstGid)
+            {
+                set = current;
+                break;
+            }
+        }
+    }
 
     return set;
 }
@@ -256,6 +284,15 @@ bool Map::LoadProperties(pugi::xml_node& node, Properties& properties)
     }
 
     return ret;
+}
+
+// L10: TODO 7: Create a method to get the map size in pixels
+Vector2D Map::GetMapSizeInPixels()
+{
+    Vector2D sizeInPixels;
+    sizeInPixels.setX((float)(mapData.width * mapData.tileWidth));
+    sizeInPixels.setY((float)(mapData.height * mapData.tileHeight));
+    return sizeInPixels;
 }
 
 
